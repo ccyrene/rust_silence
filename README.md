@@ -1,5 +1,6 @@
-# ⚡ F5-TTS Audio Preprocessing (Rust + Python via pyO3)
-A blazing-fast audio preprocessing module designed for **F5-TTS**, built in **Rust** and exposed to Python using **[pyO3](https://github.com/PyO3/pyo3)**. It uses the powerful **[Symphonia](https://github.com/pdeljanov/Symphonia)** library for decoding audio formats—supporting **MP3, WAV, FLAC, OGG**, and more—with high performance and precision. Originally inspired by [`pydub`](https://github.com/jiaaro/pydub), this project retains only the **silence detection** functionality from `pydub`. Everything else has been rebuilt for speed.
+# 🎙️ RustSilence: High-Performance Silence Detection (pydub in Rust)
+
+RustSilence is a supercharged Rust implementation of `pydub`'s silence detection module, designed for blazing-fast audio preprocessing. Leveraging the speed and safety of Rust, RustSilence can detect silent segments in WAV, MP3, FLAC, OGG, and more — all in a fraction of the time it takes in Python.
 
 ---
 
@@ -19,10 +20,8 @@ to build a rock-solid preprocessing module for **F5-TTS** and beyond.
 ## ✅ Features
 
 - 🎧 Decode audio using **Symphonia**  
-- 🔄 Convert to **mono**
 - 🔇 Detect silence (via `pydub.silence`)  
 - 🐍 Python-compatible via **pyO3**  
-- ⚡ Optimized for streaming and batch TTS pipelines  
 
 ---
 
@@ -37,7 +36,7 @@ $pip install rust_silence
 ## 🧪 Example (Python)
 
 ```python
-from f5_preprocessor import preprocess_audio
+from rust_silence import preprocess_audio
 
 # Accepts WAV, MP3, FLAC, etc.
 # Returns a NumPy array (mono, 16kHz, float32)
@@ -78,4 +77,4 @@ Audio loading & resampling powered by **Symphonia**, silence trimming via `pydub
 
 ## 📜 License
 
-MIT — build fast, speak faster ⚡🗣️
+MIT 
