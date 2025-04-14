@@ -10,7 +10,7 @@ use pyo3::wrap_pyfunction;
 
 #[pyfunction]
 fn audio_bytes_to_f32_samples_py(
-    py: Python<'_>,
+    py: Python,
     audio_bytes: &[u8],
 ) -> PyResult<(Py<PyArray1<f32>>, usize)> {
     match load::audio_bytes_to_f32_samples(audio_bytes) {
@@ -84,7 +84,7 @@ fn detect_leading_silence_py<'py>(
 
 #[pyfunction]
 fn split_on_silence_py<'py>(
-    py: Python<'py>,
+    py: Python,
     samples: PyReadonlyArray1<'py, f32>,
     sample_rate: usize,
     min_silence_len_ms: usize,
@@ -116,7 +116,7 @@ fn split_on_silence_py<'py>(
 
 #[pyfunction]
 fn remove_silence_edges_py<'py>(
-    py: Python<'py>,
+    py: Python,
     samples: PyReadonlyArray1<'py, f32>,
     sample_rate: usize,
     silence_threshold_db: f64,
@@ -138,8 +138,8 @@ fn remove_silence_edges_py<'py>(
 }
 
 #[pyfunction]
-fn preprocess_f5_py<'py>(
-    py: Python<'_>,
+fn preprocess_f5_py(
+    py: Python,
     audio_bytes: &[u8],
     chunk_size_ms: usize,
     silence_threshold_db: f64,
@@ -155,7 +155,7 @@ fn preprocess_f5_py<'py>(
 }
 
 #[pymodule]
-fn _rust_pydub(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
+fn _rust_silence(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(audio_bytes_to_f32_samples_py, m)?)?;
     m.add_function(wrap_pyfunction!(detect_nonsilent_py, m)?)?;
     m.add_function(wrap_pyfunction!(detect_silence_py, m)?)?;
