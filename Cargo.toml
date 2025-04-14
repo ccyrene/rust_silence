@@ -1,0 +1,14 @@
+[package]
+name = "rust_pydub"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "_rust_pydub"
+crate-type = ["cdylib"]
+
+[dependencies]
+ndarray = "0.16.1"
+numpy = "0.24.0"
+symphonia = { version = "0.5", features = ["mp3", "flac", "vorbis", "aac", "wav", "pcm"] }
+pyo3 = { version = "0.24.1", default-features = false, features = ["extension-module", "macros"] }
