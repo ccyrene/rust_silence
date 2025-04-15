@@ -141,8 +141,8 @@ fn remove_silence_edges_py<'py>(
 fn preprocess_f5_py(
     py: Python,
     audio_bytes: &[u8],
-    chunk_size_ms: usize,
     silence_threshold_db: f64,
+    chunk_size_ms: usize,
     clip_short: bool,
 ) -> PyResult<Py<PyArray1<f32>>> {
     let audio =
