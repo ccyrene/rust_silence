@@ -52,9 +52,9 @@ Audio loading & resampling powered by **Symphonia**, silence trimming via `pydub
 | Task                     |    Python    |   Rust (pyO3)  |
 |--------------------------|--------------|----------------|
 | from_file                |    ~120 ms   |     ~0.5 ms    |
-| detect_silence           |    ~230 ms   |     ~80 ms     |
-| detect_nonsilent         |    ~230 ms   |     ~80 ms     |
-| split_on_silence         |    ~230 ms   |     ~80 ms     |
+| detect_silence           |    ~230 ms   |     ~7 ms      |
+| detect_nonsilent         |    ~230 ms   |     ~7 ms      |
+| split_on_silence         |    ~230 ms   |     ~7 ms      |
 | detect_leading_silence   |    ~70 μs    |     ~1 μs      |
 
 > **Symphonia** provides native decoding, multi-format support, and fast performance—ideal for preprocessing pipelines like F5-TTS.

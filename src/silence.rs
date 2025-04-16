@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 fn db_to_float(db: f64, using_amplitude: bool) -> f64 {
     if using_amplitude {
         10.0_f64.powf(db / 20.0)
@@ -40,65 +42,61 @@ pub fn detect_silence(
     seek_step_ms: usize,
 ) -> Vec<[usize; 2]> {
     let sample_length = samples.len();
-
     let seg_len_ms = sample_to_ms(sample_length, sample_rate);
+
     if seg_len_ms < min_silence_len_ms {
         return vec![];
     }
 
-    let silence_thresh = db_to_float(silence_thresh_db, true); // values under this RMS are considered silent
-
-    // let min_silence_samples = sample_rate * min_silence_len_ms / 1000;
-    // let seek_step_samples = sample_rate * seek_step_ms / 1000;
-
+    let silence_thresh = db_to_float(silence_thresh_db, true);
     let min_silence_samples = ms_to_sample(min_silence_len_ms, sample_rate);
     let seek_step_samples = ms_to_sample(seek_step_ms, sample_rate);
-
-    let mut silence_starts = vec![];
     let last_slice_start = sample_length.saturating_sub(min_silence_samples);
 
-    let mut i = 0;
-    while i <= last_slice_start {
-        let end = (i + min_silence_samples).min(sample_length);
-        let slice = &samples[i..end];
-        if rms(slice) <= silence_thresh {
-            silence_starts.push(i);
-        }
-        i += seek_step_samples;
-    }
+    // Manually create the list of start indices with step
+    let indices: Vec<usize> = (0..=last_slice_start).step_by(seek_step_samples).collect();
+
+    // Parallel silence detection
+    let silence_starts: Vec<usize> = indices
+        .into_par_iter()
+        .filter_map(|i| {
+            let end = (i + min_silence_samples).min(sample_length);
+            let slice = &samples[i..end];
+            let rms_val =
+                slice.iter().map(|&x| (x as f64) * (x as f64)).sum::<f64>() / slice.len() as f64;
+            if rms_val.sqrt() <= silence_thresh {
+                Some(i)
+            } else {
+                None
+            }
+        })
+        .collect();
 
     if silence_starts.is_empty() {
         return vec![];
     }
 
-    let mut silent_ranges = vec![];
-
+    // Grouping continuous silent segments
+    let mut silent_ranges = Vec::new();
     let mut iter = silence_starts.into_iter();
-    let mut prev_i = iter.next().unwrap();
-    let mut current_range_start = prev_i;
+    let mut prev = iter.next().unwrap();
+    let mut start = prev;
 
-    for silence_start_i in iter {
-        let continuous = silence_start_i == prev_i + seek_step_samples;
-        let silence_has_gap = silence_start_i > (prev_i + min_silence_samples);
-
-        if !continuous && silence_has_gap {
-            let start_ms = sample_to_ms(current_range_start, sample_rate);
-            let end_ms = sample_to_ms(prev_i + min_silence_samples, sample_rate);
+    for current in iter {
+        if current > prev + seek_step_samples {
+            let start_ms = sample_to_ms(start, sample_rate);
+            let end_ms = sample_to_ms(prev + min_silence_samples, sample_rate);
             silent_ranges.push([start_ms, end_ms]);
-            current_range_start = silence_start_i;
+            start = current;
         }
-
-        prev_i = silence_start_i;
+        prev = current;
     }
 
-    let start_ms = sample_to_ms(current_range_start, sample_rate);
-    let mut end_ms = sample_to_ms(prev_i + min_silence_samples, sample_rate).min(seg_len_ms);
-
-    // avoid missing values
+    let start_ms = sample_to_ms(start, sample_rate);
+    let mut end_ms = sample_to_ms(prev + min_silence_samples, sample_rate).min(seg_len_ms);
     if end_ms.abs_diff(seg_len_ms) == 1 {
         end_ms = seg_len_ms;
     }
-
     silent_ranges.push([start_ms, end_ms]);
 
     silent_ranges
