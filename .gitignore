@@ -2,6 +2,12 @@
 /tests
 /src/main.rs
 
-**.wav
+__pycache__
 
+**.ipynb_checkpoints
+**.egg-info
+**.so
+main.py
+**.wav
+**.ipynb
 Dockerfile

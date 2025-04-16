@@ -6,6 +6,14 @@ fn db_to_float(db: f64, using_amplitude: bool) -> f64 {
     }
 }
 
+pub fn ms_to_sample(ms: usize, sample_rate: usize) -> usize {
+    ms * sample_rate / 1000
+}
+
+pub fn sample_to_ms(length: usize, sample_rate: usize) -> usize {
+    length * 1000 / sample_rate
+}
+
 pub fn ratio_to_db(ratio: f64, using_amplitude: bool) -> f64 {
     if ratio == 0.0 {
         f64::NEG_INFINITY
@@ -33,15 +41,18 @@ pub fn detect_silence(
 ) -> Vec<[usize; 2]> {
     let sample_length = samples.len();
 
-    let seg_len_ms = sample_length * 1000 / sample_rate;
+    let seg_len_ms = sample_to_ms(sample_length, sample_rate);
     if seg_len_ms < min_silence_len_ms {
         return vec![];
     }
 
     let silence_thresh = db_to_float(silence_thresh_db, true); // values under this RMS are considered silent
 
-    let min_silence_samples = sample_rate * min_silence_len_ms / 1000;
-    let seek_step_samples = sample_rate * seek_step_ms / 1000;
+    // let min_silence_samples = sample_rate * min_silence_len_ms / 1000;
+    // let seek_step_samples = sample_rate * seek_step_ms / 1000;
+
+    let min_silence_samples = ms_to_sample(min_silence_len_ms, sample_rate);
+    let seek_step_samples = ms_to_sample(seek_step_ms, sample_rate);
 
     let mut silence_starts = vec![];
     let last_slice_start = sample_length.saturating_sub(min_silence_samples);
@@ -71,8 +82,8 @@ pub fn detect_silence(
         let silence_has_gap = silence_start_i > (prev_i + min_silence_samples);
 
         if !continuous && silence_has_gap {
-            let start_ms = current_range_start * 1000 / sample_rate;
-            let end_ms = (prev_i + min_silence_samples) * 1000 / sample_rate;
+            let start_ms = sample_to_ms(current_range_start, sample_rate);
+            let end_ms = sample_to_ms(prev_i + min_silence_samples, sample_rate);
             silent_ranges.push([start_ms, end_ms]);
             current_range_start = silence_start_i;
         }
@@ -80,8 +91,14 @@ pub fn detect_silence(
         prev_i = silence_start_i;
     }
 
-    let start_ms = current_range_start * 1000 / sample_rate;
-    let end_ms = (prev_i + min_silence_samples) * 1000 / sample_rate;
+    let start_ms = sample_to_ms(current_range_start, sample_rate);
+    let mut end_ms = sample_to_ms(prev_i + min_silence_samples, sample_rate).min(seg_len_ms);
+
+    // avoid missing values
+    if end_ms.abs_diff(seg_len_ms) == 1 {
+        end_ms = seg_len_ms;
+    }
+
     silent_ranges.push([start_ms, end_ms]);
 
     silent_ranges
@@ -103,7 +120,7 @@ pub fn detect_nonsilent(
         seek_step_ms,
     );
 
-    let total_ms = samples.len() * 1000 / sample_rate;
+    let total_ms = sample_to_ms(samples.len(), sample_rate);
 
     if silence.is_empty() {
         return vec![[0, total_ms]];
@@ -177,8 +194,8 @@ pub fn split_on_silence(
     ranges_with_padding
         .iter()
         .map(|[start_ms, end_ms]| {
-            let start = start_ms * sample_rate / 1000;
-            let end = (end_ms * sample_rate / 1000).min(samples.len());
+            let start = ms_to_sample(*start_ms, sample_rate);
+            let end = ms_to_sample(*end_ms, sample_rate).min(samples.len());
             samples[start.min(samples.len())..end].to_vec()
         })
         .collect()
@@ -194,11 +211,10 @@ pub fn detect_leading_silence(
         return Err("chunk_size must be greater than 0".into());
     }
 
-    let samples_per_ms: usize = sample_rate / 1000;
-    let chunk_size: usize = chunk_size_ms * samples_per_ms;
+    let chunk_size = ms_to_sample(chunk_size_ms, sample_rate);
 
-    let max_amplitude = 1.0_f64;
     let mut trim_index: usize = 0;
+    let mut trim_index_ms: usize = 0;
 
     while trim_index + chunk_size <= samples.len() {
         let chunk = &samples[trim_index..trim_index + chunk_size];
@@ -207,7 +223,7 @@ pub fn detect_leading_silence(
             if rms_val == 0.0 {
                 f64::NEG_INFINITY
             } else {
-                ratio_to_db(rms_val / max_amplitude, true)
+                ratio_to_db(rms_val, true)
             }
         };
 
@@ -216,7 +232,8 @@ pub fn detect_leading_silence(
         }
 
         trim_index += chunk_size;
+        trim_index_ms += chunk_size_ms;
     }
 
-    Ok(trim_index.min(samples.len()))
+    Ok(trim_index_ms)
 }

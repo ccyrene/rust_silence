@@ -1,5 +1,5 @@
 use crate::load::audio_bytes_to_f32_samples;
-use crate::silence::{detect_leading_silence, split_on_silence, ratio_to_db, rms};
+use crate::silence::{detect_leading_silence, split_on_silence, ratio_to_db, rms, sample_to_ms};
 
 pub fn remove_silence_edges(
     samples: &[f32],
@@ -88,7 +88,7 @@ pub fn preprocess_f5(
     }
 
     samples = remove_silence_edges(&samples, sample_rate, silence_threshold_db, chunk_size_ms)?;
-    samples.extend(std::iter::repeat(0.0f32).take(sample_rate * 50 / 1000));
+    samples.extend(std::iter::repeat(0.0f32).take(sample_to_ms(50, sample_rate / 2)));
 
     Ok(samples)
 }

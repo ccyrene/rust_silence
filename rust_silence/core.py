@@ -8,7 +8,7 @@ def from_file(file: bytes) -> Tuple[npt.NDArray[np.float32], int]:
     return _rust_silence.audio_bytes_to_f32_samples_py(file)
 
 def detect_silence(
-    samples: npt:NDArray[np.float32],
+    samples: npt.NDArray[np.float32],
     sample_rate: int,
     min_silence_len_ms: int = 1000,
     silence_thresh_db: float = -16.0,
@@ -43,9 +43,9 @@ def split_on_silence(
     samples: npt.NDArray[np.float32],
     sample_rate: int,
     min_silence_len_ms: int = 1000,
-    silence_thresh_db: float = -50.0,
-    keep_silence_ms: int = 1000,
-    seek_step_ms: int = 100
+    silence_thresh_db: float = -16.0,
+    keep_silence_ms: int = 100,
+    seek_step_ms: int = 1
 ) -> List[npt.NDArray[np.float32]]:
     
     return _rust_silence.split_on_silence_py(
@@ -58,7 +58,7 @@ def split_on_silence(
     )
     
 def detect_leading_silence(
-    samples: npt:NDArray[np.float32],
+    samples: npt.NDArray[np.float32],
     sample_rate: int,
     silence_thresh_db: float = -50.0,
     chunk_size_ms: int = 10
@@ -72,7 +72,7 @@ def detect_leading_silence(
     )
     
 def remove_silence_edges(
-    samples: npt:NDArray[np.float32],
+    samples: npt.NDArray[np.float32],
     sample_rate: int,
     silence_thresh_db: float = -42.0,
     chunk_size_ms: int = 10

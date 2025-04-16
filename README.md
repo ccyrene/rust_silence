@@ -36,11 +36,12 @@ $pip install rust_silence
 ## 🧪 Example (Python)
 
 ```python
-from rust_silence import preprocess_audio
+import rust_silence
 
 # Accepts WAV, MP3, FLAC, etc.
 # Returns a NumPy array (mono, 16kHz, float32)
-waveform = preprocess_audio("example.mp3")
+audio_np, sample_rate = rust_silence.from_file("example.mp3")
+silence = rust_silence.detect_silence(audio_np, sample_rate)
 ```
 Audio loading & resampling powered by **Symphonia**, silence trimming via `pydub.silence`.
 
@@ -48,21 +49,21 @@ Audio loading & resampling powered by **Symphonia**, silence trimming via `pydub
 
 ## ⚙️ Performance Snapshot
 
-| Task                     |    Python    |   Rust (pyO3)  |    Rust    |
-|--------------------------|--------------|----------------|------------|
-| Load Audio               | ~120 ms      | ~7 ms          |
-| detect_silence           | ✅ (pydub)   | ✅ (pydub)    |
-| detect_nonsilent         | ✅ (pydub)   | ✅ (pydub)    |
-| split_on_silence         | ✅ (pydub)   | ✅ (pydub)    |
-| detect_leading_silence   | ✅ (pydub)   | ✅ (pydub)    |
+| Task                     |    Python    |   Rust (pyO3)  |
+|--------------------------|--------------|----------------|
+| from_file                |    ~120 ms   |     ~0.5 ms    |
+| detect_silence           |    ~230 ms   |     ~80 ms     |
+| detect_nonsilent         |    ~230 ms   |     ~80 ms     |
+| split_on_silence         |    ~230 ms   |     ~80 ms     |
+| detect_leading_silence   |    ~70 μs    |     ~1 μs      |
 
 > **Symphonia** provides native decoding, multi-format support, and fast performance—ideal for preprocessing pipelines like F5-TTS.
 
 
 ## 🛣 Roadmap
 
-- [x] Rust engine with Symphonia  
-- [x] pyO3 integration  
+- [x] Rust engine
+- [x] pyO3 integration
 - [x] Silence detection (from `pydub`)  
 
 ---
