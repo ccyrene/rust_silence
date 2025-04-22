@@ -1,19 +1,19 @@
 use rayon::prelude::*;
 
-fn db_to_float(db: f64, using_amplitude: bool) -> f64 {
-    if using_amplitude {
-        10.0_f64.powf(db / 20.0)
-    } else {
-        10.0_f64.powf(db / 10.0)
-    }
-}
-
 pub fn ms_to_sample(ms: usize, sample_rate: usize) -> usize {
     ms * sample_rate / 1000
 }
 
 pub fn sample_to_ms(length: usize, sample_rate: usize) -> usize {
     length * 1000 / sample_rate
+}
+
+pub fn db_to_float(db: f64, using_amplitude: bool) -> f64 {
+    if using_amplitude {
+        10.0_f64.powf(db / 20.0)
+    } else {
+        10.0_f64.powf(db / 10.0)
+    }
 }
 
 pub fn ratio_to_db(ratio: f64, using_amplitude: bool) -> f64 {
@@ -64,7 +64,7 @@ pub fn detect_silence(
             let slice = &samples[i..end];
             let rms_val =
                 slice.iter().map(|&x| (x as f64) * (x as f64)).sum::<f64>() / slice.len() as f64;
-            if rms_val.sqrt() <= silence_thresh {
+            if rms_val.sqrt() as f32 <= silence_thresh as f32 {
                 Some(i)
             } else {
                 None
@@ -76,27 +76,26 @@ pub fn detect_silence(
         return vec![];
     }
 
-    // Grouping continuous silent segments
-    let mut silent_ranges = Vec::new();
-    let mut iter = silence_starts.into_iter();
-    let mut prev = iter.next().unwrap();
-    let mut start = prev;
+    let mut silent_ranges = vec![];
+    let mut prev_i = silence_starts[0];
+    let mut current_range_start = prev_i;
 
-    for current in iter {
-        if current > prev + seek_step_samples {
-            let start_ms = sample_to_ms(start, sample_rate);
-            let end_ms = sample_to_ms(prev + min_silence_samples, sample_rate);
+    for &silence_start_i in &silence_starts[1..] {
+        let continuous = silence_start_i == prev_i + seek_step_samples;
+        let silence_has_gap = silence_start_i > (prev_i + min_silence_samples);
+
+        if !continuous && silence_has_gap {
+            let start_ms = sample_to_ms(current_range_start, sample_rate);
+            let end_ms = sample_to_ms(prev_i + min_silence_samples, sample_rate);
             silent_ranges.push([start_ms, end_ms]);
-            start = current;
+            current_range_start = silence_start_i;
         }
-        prev = current;
+        prev_i = silence_start_i;
     }
 
-    let start_ms = sample_to_ms(start, sample_rate);
-    let mut end_ms = sample_to_ms(prev + min_silence_samples, sample_rate).min(seg_len_ms);
-    if end_ms.abs_diff(seg_len_ms) == 1 {
-        end_ms = seg_len_ms;
-    }
+    // Final range
+    let start_ms = sample_to_ms(current_range_start, sample_rate);
+    let end_ms = sample_to_ms(prev_i + min_silence_samples, sample_rate).min(seg_len_ms);
     silent_ranges.push([start_ms, end_ms]);
 
     silent_ranges

@@ -1,13 +1,14 @@
 /target
-/tests
 /src/main.rs
 
 __pycache__
 
+**.pytest_cache
 **.ipynb_checkpoints
 **.egg-info
 **.so
 main.py
 **.wav
+**.flac
 **.ipynb
 Dockerfile

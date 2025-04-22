@@ -2,10 +2,24 @@ import numpy as np
 import numpy.typing as npt
 
 from rust_silence import _rust_silence
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
-def from_file(file: bytes) -> Tuple[npt.NDArray[np.float32], int]:
+def from_file(file: str | bytes) -> Tuple[npt.NDArray[np.float32], int]:
+    if isinstance(file, str):
+        file = open(file, "rb").read()
     return _rust_silence.audio_bytes_to_f32_samples_py(file)
+
+def db_to_float(
+    db: float,
+    using_amplitude: bool
+) -> float:
+    return _rust_silence.db_to_float_py(db, using_amplitude)
+
+def ratio_to_db(
+    ratio: float,
+    using_amplitude: bool
+) -> float:
+    return _rust_silence.ratio_to_db_py(ratio, using_amplitude)
 
 def detect_silence(
     samples: npt.NDArray[np.float32],
@@ -13,7 +27,7 @@ def detect_silence(
     min_silence_len_ms: int = 1000,
     silence_thresh_db: float = -16.0,
     seek_step_ms: int = 1
-) -> List[[int, int]]:
+) -> List[[int, int]] | []:
     
     return _rust_silence.detect_silence_py(
         samples,
@@ -29,7 +43,7 @@ def detect_nonsilent(
     min_silence_len_ms: int = 1000,
     silence_thresh_db: float = -16.0,
     seek_step_ms: int = 1
-) -> List[[int, int]]:
+) -> List[[int, int]] | []:
     
     return _rust_silence.detect_nonsilent_py(
         samples,
@@ -46,7 +60,10 @@ def split_on_silence(
     silence_thresh_db: float = -16.0,
     keep_silence_ms: int = 100,
     seek_step_ms: int = 1
-) -> List[npt.NDArray[np.float32]]:
+) -> List[npt.NDArray[np.float32]] | []:
+    
+    if isinstance(keep_silence_ms, bool):
+        keep_silence_ms = int(samples.shape[0] / sample_rate * 1000) if keep_silence_ms else 0
     
     return _rust_silence.split_on_silence_py(
         samples,

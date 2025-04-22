@@ -26,6 +26,20 @@ fn audio_bytes_to_f32_samples_py(
 }
 
 #[pyfunction]
+fn db_to_float_py(db: f64, using_amplitude: bool) -> PyResult<f64> {
+    let res = silence::db_to_float(db, using_amplitude);
+
+    Ok(res)
+}
+
+#[pyfunction]
+fn ratio_to_db_py(ratio: f64, using_amplitude: bool) -> PyResult<f64> {
+    let res = silence::ratio_to_db(ratio, using_amplitude);
+
+    Ok(res)
+}
+
+#[pyfunction]
 fn detect_silence_py<'py>(
     samples: PyReadonlyArray1<'py, f32>,
     sample_rate: usize,
@@ -157,6 +171,8 @@ fn preprocess_f5_py(
 #[pymodule]
 fn _rust_silence(_py: Python, m: &Bound<PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(audio_bytes_to_f32_samples_py, m)?)?;
+    m.add_function(wrap_pyfunction!(db_to_float_py, m)?)?;
+    m.add_function(wrap_pyfunction!(ratio_to_db_py, m)?)?;
     m.add_function(wrap_pyfunction!(detect_nonsilent_py, m)?)?;
     m.add_function(wrap_pyfunction!(detect_silence_py, m)?)?;
     m.add_function(wrap_pyfunction!(detect_leading_silence_py, m)?)?;

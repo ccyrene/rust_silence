@@ -18,10 +18,10 @@ to build a rock-solid preprocessing module for **F5-TTS** and beyond.
 ---
 
 ## ✅ Features
-
-- 🎧 Decode audio using **Symphonia**  
+- Mono support only
+- 🎧 Decode audio using **Symphonia**  (bits per sample for fmt_ext PCM sub-type must be <= 32 bits)
 - 🔇 Detect silence (via `pydub.silence`)  
-- 🐍 Python-compatible via **pyO3**  
+- 🐍 Python-compatible via **pyO3**
 
 ---
 

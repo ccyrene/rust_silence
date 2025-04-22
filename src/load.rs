@@ -9,7 +9,6 @@ use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 use symphonia::default::{get_codecs, get_probe};
 
-
 pub fn audio_bytes_to_f32_samples(
     audio_bytes: &[u8],
 ) -> Result<(Vec<f32>, usize), Box<dyn std::error::Error>> {
@@ -33,7 +32,8 @@ pub fn audio_bytes_to_f32_samples(
         .codec_params
         .sample_rate
         .ok_or("Sample rate not found")?;
-    let mut samples = Vec::<f32>::new();
+
+    let mut mono_samples = Vec::<f32>::new();
 
     loop {
         let packet = match format.next_packet() {
@@ -43,11 +43,23 @@ pub fn audio_bytes_to_f32_samples(
         };
 
         let decoded = decoder.decode(&packet)?;
-        let mut sample_buf = SampleBuffer::<f32>::new(decoded.capacity() as u64, *decoded.spec());
+        let spec = *decoded.spec();
+        let channels = spec.channels.count();
+
+        let mut sample_buf = SampleBuffer::<f32>::new(decoded.capacity() as u64, spec);
         sample_buf.copy_interleaved_ref(decoded);
 
-        samples.extend_from_slice(sample_buf.samples());
+        let samples = sample_buf.samples();
+        let frame_count = samples.len() / channels;
+
+        for i in 0..frame_count {
+            let mut sum = 0.0f32;
+            for ch in 0..channels {
+                sum += samples[i * channels + ch];
+            }
+            mono_samples.push(sum / channels as f32);
+        }
     }
 
-    Ok((samples, sample_rate as usize))
+    Ok((mono_samples, sample_rate as usize))
 }

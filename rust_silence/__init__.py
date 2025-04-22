@@ -1,5 +1,7 @@
 from .core import (
     from_file,
+    db_to_float,
+    ratio_to_db,
     detect_silence,
     detect_nonsilent,
     split_on_silence,
