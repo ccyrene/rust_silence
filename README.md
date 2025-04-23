@@ -30,11 +30,6 @@ to build a rock-solid preprocessing module for **F5-TTS** and beyond.
 ```bash
 $pip install rust_silence
 ```
-or 
-```bash
-$uv install rust_silence
-```
-
 
 ---
 
