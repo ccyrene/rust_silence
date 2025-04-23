@@ -28,11 +28,11 @@ pub fn remove_silence_edges(
             .enumerate()
         {
             // fraction round up to 1 every 20 step
-            if i % 20 == start_special {
-                samples_per_ms = samples_per_ms_special
+            samples_per_ms = if i % 20 == start_special {
+                samples_per_ms_special
             } else {
-                samples_per_ms = samples_per_ms_normal
-            }
+                samples_per_ms_normal
+            };
 
             let window = &trimmed_start[window_start
                 ..window_start + samples_per_ms.min(trimmed_start.len() - window_start)];
@@ -56,10 +56,9 @@ pub fn remove_silence_edges(
     } else {
         let samples_per_ms = sample_rate / 1000;
 
-        for (i, window_start) in (0..trimmed_start.len().saturating_sub(samples_per_ms))
+        for window_start in (0..trimmed_start.len().saturating_sub(samples_per_ms))
             .rev()
             .step_by(samples_per_ms)
-            .enumerate()
         {
             let window = &trimmed_start[window_start
                 ..window_start + samples_per_ms.min(trimmed_start.len() - window_start)];
