@@ -8,33 +8,75 @@ pub fn remove_silence_edges(
     sample_rate: usize,
     silence_threshold_db: f64,
 ) -> Result<Vec<f32>, Box<dyn std::error::Error>> {
-    let samples_per_ms = sample_rate / 1000;
     let start_idx = detect_leading_silence(samples, sample_rate, silence_threshold_db, 10)?;
-
     let trimmed_start = &samples[ms_to_sample(start_idx, sample_rate)..];
-
     let mut end_idx = trimmed_start.len();
 
-    for (i, window_start) in (0..trimmed_start.len().saturating_sub(samples_per_ms))
-        .rev()
-        .step_by(samples_per_ms)
-        .enumerate()
-    {
-        let window = &trimmed_start
-            [window_start..window_start + samples_per_ms.min(trimmed_start.len() - window_start)];
+    // resume missing values
+    if sample_rate == 22050 {
+        let samples_per_ms_normal: usize = 22;
+        let samples_per_ms_special: usize = 23;
 
-        let dbfs = {
-            let rms_val = rms(window);
-            if rms_val == 0.0 {
-                f64::NEG_INFINITY
+        let mut samples_per_ms: usize = samples_per_ms_normal;
+
+        // find fraction round up first position of reverse samples
+        let start_special = sample_to_ms(trimmed_start.len(), sample_rate) % 20;
+
+        for (i, window_start) in (0..trimmed_start.len().saturating_sub(samples_per_ms))
+            .rev()
+            .step_by(samples_per_ms)
+            .enumerate()
+        {
+            // fraction round up to 1 every 20 step
+            if i % 20 == start_special {
+                samples_per_ms = samples_per_ms_special
             } else {
-                ratio_to_db(rms_val, true)
+                samples_per_ms = samples_per_ms_normal
             }
-        };
 
-        if dbfs > silence_threshold_db {
-            end_idx = window_start + samples_per_ms;
-            break;
+            let window = &trimmed_start[window_start
+                ..window_start + samples_per_ms.min(trimmed_start.len() - window_start)];
+
+            let dbfs = {
+                let rms_val = rms(window);
+                if rms_val == 0.0 {
+                    f64::NEG_INFINITY
+                } else {
+                    ratio_to_db(rms_val, true)
+                }
+            };
+
+            if dbfs > silence_threshold_db {
+                end_idx = window_start + samples_per_ms;
+                break;
+            }
+        }
+
+    // not have missing values
+    } else {
+        let samples_per_ms = sample_rate / 1000;
+
+        for (i, window_start) in (0..trimmed_start.len().saturating_sub(samples_per_ms))
+            .rev()
+            .step_by(samples_per_ms)
+            .enumerate()
+        {
+            let window = &trimmed_start[window_start
+                ..window_start + samples_per_ms.min(trimmed_start.len() - window_start)];
+
+            let dbfs = {
+                let rms_val = rms(window);
+                if rms_val == 0.0 {
+                    f64::NEG_INFINITY
+                } else {
+                    ratio_to_db(rms_val, true)
+                }
+            };
+
+            if dbfs > silence_threshold_db {
+                end_idx = window_start + samples_per_ms;
+                break;
+            }
         }
     }
 
@@ -89,10 +131,6 @@ pub fn preprocess_f5(
 
     samples = remove_silence_edges(&samples, sample_rate, -42.0)?;
     samples.extend(std::iter::repeat(0.0f32).take(ms_to_sample(50, sample_rate / 2)));
-    println!(
-        "remove_silence_edges: {}",
-        sample_to_ms(samples.len(), sample_rate)
-    );
 
     Ok(samples)
 }
