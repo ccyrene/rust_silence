@@ -30,6 +30,11 @@ to build a rock-solid preprocessing module for **F5-TTS** and beyond.
 ```bash
 $pip install rust_silence
 ```
+or 
+```bash
+$uv install rust_silence
+```
+
 
 ---
 
@@ -39,7 +44,7 @@ $pip install rust_silence
 import rust_silence
 
 # Accepts WAV, MP3, FLAC, etc.
-# Returns a NumPy array (mono, 16kHz, float32)
+# Returns a NumPy array (mono, float32)
 audio_np, sample_rate = rust_silence.from_file("example.mp3")
 silence = rust_silence.detect_silence(audio_np, sample_rate)
 ```

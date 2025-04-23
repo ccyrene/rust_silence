@@ -103,17 +103,14 @@ def remove_silence_edges(
     )
     
 def preprocess_f5(
-    samples: npt.NDArray[np.float32],
-    sample_rate: int,
-    silence_thresh_db: float = -42.0,
-    chunk_size_ms: int = 10,
+    file: str | bytes,
     clip_short: bool = True
 ) -> npt.NDArray[np.float32]:
     
+    if isinstance(file, str):
+        file = open(file, "rb").read()
+    
     return _rust_silence.preprocess_f5_py(
-        samples,
-        sample_rate,
-        silence_thresh_db,
-        chunk_size_ms,
+        file,
         clip_short
     )

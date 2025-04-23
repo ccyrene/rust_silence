@@ -134,17 +134,11 @@ fn remove_silence_edges_py<'py>(
     samples: PyReadonlyArray1<'py, f32>,
     sample_rate: usize,
     silence_threshold_db: f64,
-    chunk_size_ms: usize,
 ) -> PyResult<Py<PyArray1<f32>>> {
     let samples = samples.as_slice()?;
 
-    let trimmed = preprocess_f5::remove_silence_edges(
-        samples,
-        sample_rate,
-        silence_threshold_db,
-        chunk_size_ms,
-    )
-    .map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let trimmed = preprocess_f5::remove_silence_edges(samples, sample_rate, silence_threshold_db)
+        .map_err(|e| PyValueError::new_err(e.to_string()))?;
 
     let py_array: Py<PyArray1<f32>> = Array1::from_vec(trimmed).into_pyarray(py).into();
 
@@ -155,13 +149,10 @@ fn remove_silence_edges_py<'py>(
 fn preprocess_f5_py(
     py: Python,
     audio_bytes: &[u8],
-    silence_threshold_db: f64,
-    chunk_size_ms: usize,
     clip_short: bool,
 ) -> PyResult<Py<PyArray1<f32>>> {
-    let audio =
-        preprocess_f5::preprocess_f5(audio_bytes, chunk_size_ms, silence_threshold_db, clip_short)
-            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let audio = preprocess_f5::preprocess_f5(audio_bytes, clip_short)
+        .map_err(|e| PyValueError::new_err(e.to_string()))?;
 
     let py_array: Py<PyArray1<f32>> = Array1::from_vec(audio).into_pyarray(py).into();
 
