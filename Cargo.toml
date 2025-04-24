@@ -1,10 +1,10 @@
 [package]
-name = "rust_pydub"
+name = "rust_silence"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "_rust_pydub"
+name = "_rust_silence"
 crate-type = ["cdylib"]
 
 [dependencies]

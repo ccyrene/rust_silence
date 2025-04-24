@@ -314,7 +314,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust_pydub"
+name = "rust_silence"
 version = "0.1.0"
 dependencies = [
  "ndarray",
