@@ -27,7 +27,7 @@ def detect_silence(
     min_silence_len_ms: int = 1000,
     silence_thresh_db: float = -16.0,
     seek_step_ms: int = 1
-) -> List[[int, int]] | []:
+) -> List[Tuple[int, int]]:
     
     return _rust_silence.detect_silence_py(
         samples,
@@ -43,7 +43,7 @@ def detect_nonsilent(
     min_silence_len_ms: int = 1000,
     silence_thresh_db: float = -16.0,
     seek_step_ms: int = 1
-) -> List[[int, int]] | []:
+) -> List[Tuple[int, int]]:
     
     return _rust_silence.detect_nonsilent_py(
         samples,
@@ -60,7 +60,7 @@ def split_on_silence(
     silence_thresh_db: float = -16.0,
     keep_silence_ms: int = 100,
     seek_step_ms: int = 1
-) -> List[npt.NDArray[np.float32]] | []:
+) -> List[npt.NDArray[np.float32]]:
     
     if isinstance(keep_silence_ms, bool):
         keep_silence_ms = int(samples.shape[0] / sample_rate * 1000) if keep_silence_ms else 0

@@ -1,6 +1,6 @@
 [project]
 name = "rust_silence"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 readme = "README.md"
 license = {file = "LICENSE"}
